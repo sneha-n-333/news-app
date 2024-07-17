@@ -1,53 +1,3 @@
-// import React, { useState, useEffect } from 'react';
-// import axios from 'axios';
-// import NewsCard from './NewsCard';
-
-// const News = ({ category, language }) => {
-//   const [articles, setArticles] = useState([]);
-
-//   useEffect(() => {
-//     const fetchNews = async () => {
-//       const apiKey = process.env.REACT_APP_NEWSAPI_API_KEY;
-//       let apiUrl = `https://newsapi.org/v2/top-headlines?language=${language}&apiKey=${apiKey}`;
-
-//       // Add category to API URL if provided
-//       if (category) {
-//         apiUrl += `&category=${category}`;
-//       }
-
-//       const response = await axios.get(apiUrl);
-//       setArticles(response.data.articles);
-//     };
-
-//     fetchNews();
-//   }, [category, language]);
-
-//   return (
-//     <div style={{ minHeight: '300px' }}>
-//        <h3 style={{margin:'0px 40px'}}>{category ? `${category.charAt(0).toUpperCase() + category.slice(1)} News` : 'Top Headlines'}</h3>
-       
-//     <div className="news-container">
-//         {articles.length > 0 ? (
-//           articles.map((article, index) => (
-//             <NewsCard
-//               key={index}
-//               title={article.title}
-//               description={article.description}
-//               url={article.url}
-//               imageUrl={article.urlToImage || 'default-image-url.jpg'}
-//               published_date={article.publishedAt}
-//             />
-//           ))
-//         ) : (
-//           <p>No news articles available.</p>
-//         )}
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default News;
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import NewsCard from './NewsCard';
@@ -60,6 +10,10 @@ const News = ({ category, language }) => {
     const fetchNews = async () => {
       try {
         const apiKey = process.env.REACT_APP_NEWSAPI_API_KEY;
+        if (!apiKey) {
+          throw new Error('API key is missing');
+        }
+
         let apiUrl = `https://newsapi.org/v2/top-headlines?language=${language}&apiKey=${apiKey}`;
 
         // Add category to API URL if provided
@@ -69,11 +23,25 @@ const News = ({ category, language }) => {
 
         console.log(`Fetching news from API: ${apiUrl}`);
 
-        const response = await axios.get(apiUrl);
+        const response = await axios.get(apiUrl, {
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+
         setArticles(response.data.articles);
       } catch (error) {
         console.error('Error fetching news:', error);
-        setError('Failed to fetch news. Please try again later.');
+        if (error.response) {
+          console.error('Error response data:', error.response.data);
+          setError(`Failed to fetch news: ${error.response.data.message}`);
+        } else if (error.request) {
+          console.error('Error request:', error.request);
+          setError('Failed to fetch news: No response received from the server.');
+        } else {
+          console.error('Error message:', error.message);
+          setError(`Failed to fetch news: ${error.message}`);
+        }
       }
     };
 
@@ -109,4 +77,3 @@ const News = ({ category, language }) => {
 };
 
 export default News;
-
